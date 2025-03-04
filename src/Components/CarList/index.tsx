@@ -1,7 +1,6 @@
 import {useState, useEffect} from 'react'
 import axios from 'axios'
 import CarCard from "../CarCard";
-import CarInput from "../CarInput";
 import styles from "./CarList.module.css"
 
 interface CarInfoType{

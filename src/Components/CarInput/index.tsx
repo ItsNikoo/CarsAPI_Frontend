@@ -1,21 +1,13 @@
 import styles from './CarInput.module.css'
-import {useState, useEffect} from "react";
+import {useState} from "react";
 import axios from "axios";
 
-interface Props {
-    brand: string,
-    model: string,
-    year: number,
-    code: string
-}
 
-export default function CarInput(props: Props) {
+export default function CarInput() {
     const [brand, setBrand] = useState('')
     const [model, setModel] = useState('')
     const [year, setYear] = useState(0)
     const [code, setCode] = useState<string>('')
-
-    const [carData, setCarData] = useState<Props[] | null>(null);
 
     const [errors, setErrors] = useState<{
         brand?: string;
@@ -85,7 +77,7 @@ export default function CarInput(props: Props) {
 
     return (
         <>
-            <form className={styles.container} action="text" onSubmit={handleSubmit}>
+            <form className={styles.container} onSubmit={handleSubmit}>
                 <div className={styles.inputContainer}>
                     <input className={styles.input}
                            placeholder='Марка'
@@ -125,14 +117,6 @@ export default function CarInput(props: Props) {
                 </div>
                 <button onClick={handleSubmit} type='submit'>Ввести данные</button>
             </form>
-            {/*<div>*/}
-            {/*    <h3>Сведения о машине</h3>*/}
-            {/*    {carData ? (*/}
-            {/*        <h3>{carData.brand} | {carData.model} | {carData.year} | {carData.code}</h3>*/}
-            {/*    ) : (*/}
-            {/*        <h3>Данные не введены</h3>*/}
-            {/*    )}*/}
-            {/*</div>*/}
         </>
     )
 }
