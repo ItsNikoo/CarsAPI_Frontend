@@ -1,121 +1,90 @@
 import styles from './CarInput.module.css'
-import {useState} from "react";
 import axios from "axios";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 
 
 export default function CarInput() {
-    const [brand, setBrand] = useState('')
-    const [model, setModel] = useState('')
-    const [year, setYear] = useState(0)
-    const [code, setCode] = useState<string>('')
 
-    const [errors, setErrors] = useState<{
-        brand?: string;
-        model?: string;
-        year?: string;
-        code?: string;
-    }>({});
+    const queryClient = useQueryClient();
 
-    const validateForm = () => {
-        const newErrors: { [key: string]: string } = {};
 
-        if (!brand) {
-            newErrors.brand = 'Марка не может быть пустой';
-        }
-        if (!model) newErrors.model = 'Модель не может быть пустой';
-        if (year <= 0) newErrors.year = 'Год выпуска должен быть положительным числом';
-        if (!code) {
-            newErrors.code = 'Идентификатор не может быть пустым';
-        } else if (code.length !== 10) {
-            newErrors.code = 'Идентификатор должен быть длиной в 10 символов';
-        }
-
-        setErrors(newErrors)
-        return Object.keys(newErrors).length === 0; // Возвращает true, если ошибок нет
-
+    async function createCar(newCar) {
+        const response = await axios.post(`http://127.0.0.1:8000/api/cars/`, newCar, {
+            headers: {"Content-Type": "application/json"}
+        });
+        return response.data;
     }
 
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault();
-        if (!validateForm()) {
+    const mutation = useMutation({
+        mutationFn: createCar,
+        onSuccess: () => {
+            queryClient.invalidateQueries([`cars`])
+        },
+        onError: (err) => {
+            console.error(err)
+        }
+    })
+
+
+    function onSubmit(event) {
+        event.preventDefault()
+        const formData = new FormData(event.target)
+        const car = {
+            brand: formData.get("brand"),
+            model: formData.get("model"),
+            year: formData.get("year"),
+            code: formData.get("code")
+        }
+
+        const errors: {[key: string]: string} = {};
+        if (!car.brand.trim()) errors.brand = 'Марка не может быть пустой'
+        if (!car.model.trim()) errors.model = "Модель не может быть пустой"
+        if (!car.year || Number(car.year) <= 0) errors.year = "Год выпуска должен быть положительным числом"
+        if (!car.code.trim()) {
+            errors.code = 'Идентификатор не может быть пустым';
+        } else if (car.code.length !== 10) {
+            errors.code = 'Идентификатор должен быть длиной в 10 символов';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            alert(JSON.stringify(errors)); // Можно использовать состояние или отображение ошибок через UI
             return;
         }
-        const carData = {
-            brand,
-            model,
-            year,
-            code
-        }
-
-        try{
-            const response = await axios.post('http://127.0.0.1:8000/api/cars/', carData);
-            console.log('Данные успешно отправлены:', response.data);
-
-            // Очистка формы после успешной отправки
-            setBrand('');
-            setModel('');
-            setYear(0);
-            setCode('');
-            setErrors({});
-        }catch (error){
-            console.log(error);
-
-            if (axios.isAxiosError(error)) {
-                if (error.response) {
-                    // Ошибка от сервера (например, 400 или 500)
-                    console.error('Ошибка сервера:', error.response.data);
-                } else {
-                    // Ошибка сети или другая ошибка
-                    console.error('Ошибка сети:', error.message);
-                }
-            }
-
-        }
+        console.log(car)
+        mutation.mutate(car)
+        event.target.reset()
 
     }
 
 
     return (
         <>
-            <form className={styles.container} onSubmit={handleSubmit}>
+            <form className={styles.container} onSubmit={onSubmit}>
                 <div className={styles.inputContainer}>
                     <input className={styles.input}
                            placeholder='Марка'
                            type="text"
-                           value={brand}
-                           onChange={(e) => setBrand(e.target.value)}/>
-                    {errors.brand && <span className={styles.error}>{errors.brand}</span>}
+                           name="brand"/>
                 </div>
                 <div className={styles.inputContainer}>
                     <input className={styles.input}
                            placeholder='Модель'
                            type="text"
-                           value={model}
-                           onChange={(e) => setModel(e.target.value)}/>
-                    {errors.model && <span className={styles.error}>{errors.model}</span>}
+                           name="model"/>
                 </div>
                 <div className={styles.inputContainer}>
-                    <input
-                        className={styles.input}
-                        placeholder='Год выпуска'
-                        type="number"
-                        value={year === 0 ? '' : year} // Показываем пустую строку, если year === null
-                        onChange={(e) => {
-                            const value = e.target.value;
-                            setYear(value === '' ? 0 : Number(value));
-                        }}
-                    />
-                    {errors.year && <span className={styles.error}>{errors.year}</span>}
+                    <input className={styles.input}
+                           placeholder='Год'
+                           type="number"
+                           name="year"/>
                 </div>
                 <div className={styles.inputContainer}>
                     <input className={styles.input}
                            placeholder='Идентификатор'
                            type="text"
-                           value={code}
-                           onChange={(e) => setCode(e.target.value)}/>
-                    {errors.code && <span className={styles.error}>{errors.code}</span>}
+                           name="code"/>
                 </div>
-                <button onClick={handleSubmit} type='submit'>Ввести данные</button>
+                <button type='submit'>Ввести данные</button>
             </form>
         </>
     )

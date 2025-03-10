@@ -1,4 +1,5 @@
 import axios from "axios";
+import {useQueryClient} from "@tanstack/react-query";
 
 interface Props {
     id: number,
@@ -10,11 +11,14 @@ interface Props {
 
 import styles from './CarCard.module.css'
 export default function CarCard(props: Props) {
+    const client = useQueryClient();
 
     async function deleteCar(id: number) {
         try{
             const response = await axios.delete(`http://127.0.0.1:8000/api/cars/${id}/`);
             console.log(response)
+
+            client.invalidateQueries([`cars`])
         }catch(error){
             console.log(error);
         }
