@@ -1,11 +1,19 @@
 import styles from './CarInput.module.css'
 import axios from "axios";
 import {useMutation, useQueryClient} from "@tanstack/react-query";
+import {useState} from "react";
 
 
 export default function CarInput() {
 
     const queryClient = useQueryClient();
+
+    const [formData, setFormData] = useState({
+        brand: "",
+        model: "",
+        year: '',
+        code: ""
+    })
 
 
     async function createCar(newCar) {
@@ -25,21 +33,26 @@ export default function CarInput() {
         }
     })
 
+    function handleChange(event) {
+        const {name, value} = event.target;
+        setFormData((prev) => ({...prev, [name]: value}))
+    }
+
 
     function onSubmit(event) {
         event.preventDefault()
-        const formData = new FormData(event.target)
         const car = {
-            brand: formData.get("brand"),
-            model: formData.get("model"),
-            year: formData.get("year"),
-            code: formData.get("code")
+            brand: formData.brand,
+            model: formData.model,
+            year: formData.year,
+            code: formData.code
         }
 
-        const errors: {[key: string]: string} = {};
+        const errors: { [key: string]: string } = {};
         if (!car.brand.trim()) errors.brand = 'Марка не может быть пустой'
         if (!car.model.trim()) errors.model = "Модель не может быть пустой"
-        if (!car.year || Number(car.year) <= 0) errors.year = "Год выпуска должен быть положительным числом"
+        const yearNum = Number(car.year)
+        if (!car.year || yearNum <= 0) errors.year = "Год выпуска должен быть положительным числом"
         if (!car.code.trim()) {
             errors.code = 'Идентификатор не может быть пустым';
         } else if (car.code.length !== 10) {
@@ -50,9 +63,10 @@ export default function CarInput() {
             alert(JSON.stringify(errors)); // Можно использовать состояние или отображение ошибок через UI
             return;
         }
-        console.log(car)
-        mutation.mutate(car)
-        event.target.reset()
+        const carToSend = { ...car, year: yearNum };
+        console.log(carToSend)
+        mutation.mutate(carToSend)
+        setFormData({brand: '', model: '', year: '', code: ''})
 
     }
 
@@ -64,25 +78,33 @@ export default function CarInput() {
                     <input className={styles.input}
                            placeholder='Марка'
                            type="text"
-                           name="brand"/>
+                           name="brand"
+                           value={formData.brand}
+                           onChange={handleChange}/>
                 </div>
                 <div className={styles.inputContainer}>
                     <input className={styles.input}
                            placeholder='Модель'
                            type="text"
-                           name="model"/>
+                           name="model"
+                           value={formData.model}
+                           onChange={handleChange}/>
                 </div>
                 <div className={styles.inputContainer}>
                     <input className={styles.input}
                            placeholder='Год'
                            type="number"
-                           name="year"/>
+                           name="year"
+                           value={formData.year}
+                           onChange={handleChange}/>
                 </div>
                 <div className={styles.inputContainer}>
                     <input className={styles.input}
                            placeholder='Идентификатор'
                            type="text"
-                           name="code"/>
+                           name="code"
+                           value={formData.code}
+                           onChange={handleChange}/>
                 </div>
                 <button type='submit'>Ввести данные</button>
             </form>
